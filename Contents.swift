@@ -95,8 +95,33 @@ func testFilteringBuildings() {
     print((client.viewState.buildings.map { $0.name }) == ["Within filter"])
 }
 
+//: Test: All Buildings Integration Contract
+
+struct DatabaseBuildingRepository: BuildingRepository {
+    func buildings(onComplete: ([Building]) -> Void) {
+        // fetch buildings from database
+        let buildings = [Building(name: "Test Building")]
+        onComplete(buildings)
+    }
+}
+
+func testAllBuildingsRepositoryContract() {
+    let databaseBuildingRepository = DatabaseBuildingRepository()
+
+    // async assert
+    print("Fetching all buildings from the database should return all known buildings")
+    databaseBuildingRepository.buildings { buildings in
+        if buildings.count != 1 {
+            print(false)
+        } else {
+            print(true)
+        }
+    }
+}
+
 testFilteringBuildings()
 testDisplayingBuildingList()
+testAllBuildingsRepositoryContract()
 
 // PlaygroundPage.current.liveView = ui
 
