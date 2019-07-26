@@ -12,10 +12,16 @@ protocol BuildingRepository {
     func buildings(onComplete: ([Building]) -> Void)
 }
 
+func serializeBuilding(_ building: Building) -> [String: Any] {
+    return [
+        "name": building.name
+    ]
+}
+
 struct Server {
     let buildingRepository: BuildingRepository
     
-    func fetchBuildings(onComplete: ([Building]) -> Void) {
+    func fetchBuildings(buildingSerializer: (Building) -> [String: Any] = serializeBuilding,  onComplete: ([Building]) -> Void) {
         buildingRepository.buildings { buildings in
             onComplete(buildings)
         }
