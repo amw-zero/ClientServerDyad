@@ -8,13 +8,17 @@ struct Building: CustomStringConvertible {
     var description: String { return name }
 }
 
+protocol BuildingRepository {
+    func buildings(onComplete: ([Building]) -> Void)
+}
+
 struct Server {
+    let buildingRepository: BuildingRepository
+    
     func fetchBuildings(onComplete: ([Building]) -> Void) {
-        let buildings = [
-            Building(name: "Empire State Building"),
-            Building(name: "Test Building")
-        ]
-        onComplete(buildings)
+        buildingRepository.buildings { buildings in
+            onComplete(buildings)
+        }
     }
     
     func filterBuildings(onComplete: ([Building]) -> Void) {
@@ -53,9 +57,18 @@ class Client {
 
 //: Test: When the app starts, a list of buildings are shown
 
+struct StubBuildingRepository: BuildingRepository {
+    func buildings(onComplete: ([Building]) -> Void) {
+        let buildings = [
+            Building(name: "Empire State Building"),
+            Building(name: "Test Building")
+        ]
+        onComplete(buildings)
+    }
+}
 
 func testDisplayingBuildingList() {
-    let server = Server()
+    let server = Server(buildingRepository: StubBuildingRepository())
     let client = Client(server: server)
     
     client.showHomeScreen()
@@ -67,7 +80,7 @@ func testDisplayingBuildingList() {
 //: Test: Filtering buildings,
 
 func testFilteringBuildings() {
-    let server = Server()
+    let server = Server(buildingRepository: StubBuildingRepository())
     let client = Client(server: server)
     client.viewState = ViewState(
         buildings: [
