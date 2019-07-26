@@ -16,6 +16,13 @@ struct Server {
         ]
         onComplete(buildings)
     }
+    
+    func filterBuildings(onComplete: ([Building]) -> Void) {
+        let buildings = [
+            Building(name: "Within filter")
+        ]
+        onComplete(buildings)
+    }
 }
 
 struct ViewState {
@@ -38,7 +45,9 @@ class Client {
     }
     
     func filterBuildings(byName name: String) {
-        viewState.buildings = viewState.buildings.filter { $0.name == name }
+        server.filterBuildings { buildings in
+            viewState.buildings = buildings
+        }
     }
 }
 
