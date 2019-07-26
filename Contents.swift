@@ -21,9 +21,9 @@ func serializeBuilding(_ building: Building) -> [String: Any] {
 struct Server {
     let buildingRepository: BuildingRepository
     
-    func fetchBuildings(buildingSerializer: (Building) -> [String: Any] = serializeBuilding,  onComplete: ([Building]) -> Void) {
+    func fetchBuildings(buildingSerializer: (Building) -> [String: Any] = serializeBuilding,  onComplete: ([[String: Any]]) -> Void) {
         buildingRepository.buildings { buildings in
-            onComplete(buildings)
+            onComplete(buildings.map(serializeBuilding))
         }
     }
     
@@ -39,6 +39,14 @@ struct ViewState {
     var buildings: [Building] = []
 }
 
+func buildingDeserializer(_ json: [String: Any]) -> Building? {
+    if let name = json["name"] as? String {
+        return Building(name: name)
+    }
+    
+    return nil
+}
+
 class Client {
     let server: Server
     var viewState: ViewState
@@ -48,9 +56,9 @@ class Client {
         self.viewState = viewState
     }
     
-    func showHomeScreen() {
+    func showHomeScreen(buildingDeserializer: ([String: Any]) -> Building? = buildingDeserializer) {
         server.fetchBuildings { buildings in
-            viewState.buildings = buildings
+            viewState.buildings = buildings.compactMap(buildingDeserializer)
         }
     }
     
