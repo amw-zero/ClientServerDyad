@@ -1,6 +1,49 @@
 //: Playground - noun: a place where people can play
 
+import UIKit
 import PlaygroundSupport
+
+struct ViewState {
+    var buildings: [Building] = []
+}
+
+class ViewController: UIViewController {
+    let buildingLabel = UILabel()
+    var onButtonTap: () -> Void = { }
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        view.backgroundColor = .white
+        
+        let button = UIButton(type: .system)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.setTitle("Fetch buildings", for: .normal)
+        button.addTarget(
+            self,
+            action: #selector(fetchBuildings),
+            for: .touchUpInside
+        )
+        
+        buildingLabel.text = "Loading"
+        buildingLabel.translatesAutoresizingMaskIntoConstraints = false
+        
+        view.addSubview(button)
+        view.addSubview(buildingLabel)
+        
+        NSLayoutConstraint.activate([
+            button.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            button.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+        ])
+    }
+    
+    func render(_ state: ViewState) {
+        buildingLabel.text = state.buildings.first?.name ?? "Empty"
+    }
+    
+    @objc func fetchBuildings() {
+        onButtonTap()
+    }
+}
 
 struct Building: CustomStringConvertible {
     let name: String
@@ -35,10 +78,6 @@ struct Server {
     }
 }
 
-struct ViewState {
-    var buildings: [Building] = []
-}
-
 func buildingDeserializer(_ json: [String: Any]) -> Building? {
     if let name = json["name"] as? String {
         return Building(name: name)
@@ -49,11 +88,20 @@ func buildingDeserializer(_ json: [String: Any]) -> Building? {
 
 class Client {
     let server: Server
-    var viewState: ViewState
+    var viewState: ViewState {
+        didSet {
+            subscriptions.forEach { $0(viewState) }
+        }
+    }
+    var subscriptions: [(ViewState) -> Void] = []
     
     init(server: Server, viewState: ViewState = ViewState())  {
         self.server = server
         self.viewState = viewState
+    }
+    
+    func addSubscription(_ subscription: @escaping (ViewState) -> Void) {
+        subscriptions.append(subscription)
     }
     
     func showHomeScreen(buildingDeserializer: ([String: Any]) -> Building? = buildingDeserializer) {
@@ -137,5 +185,15 @@ testFilteringBuildings()
 testDisplayingBuildingList()
 testAllBuildingsRepositoryContract()
 
-// PlaygroundPage.current.liveView = ui
+
+let server = Server(buildingRepository: StubBuildingRepository())
+let client = Client(server: server)
+
+let vc = ViewController()
+vc.onButtonTap = {
+    client.showHomeScreen()
+}
+client.addSubscription(vc.render)
+
+PlaygroundPage.current.liveView = vc
 
