@@ -7,9 +7,10 @@ struct ViewState {
     var buildings: [Building] = []
 }
 
-class ViewController: UIViewController {
-    let buildingLabel = UILabel()
+class ViewController: UIViewController, UITableViewDataSource {
     var onButtonTap: () -> Void = { }
+    let tableView = UITableView()
+    var buildings: [Building] = []
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -24,24 +25,41 @@ class ViewController: UIViewController {
             for: .touchUpInside
         )
         
-        buildingLabel.text = "Loading"
-        buildingLabel.translatesAutoresizingMaskIntoConstraints = false
+        tableView.translatesAutoresizingMaskIntoConstraints = false
+        tableView.dataSource = self
         
         view.addSubview(button)
-        view.addSubview(buildingLabel)
+        view.addSubview(tableView)
         
         NSLayoutConstraint.activate([
             button.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            button.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            button.topAnchor.constraint(equalTo: view.topAnchor, constant: 30),
+            tableView.topAnchor.constraint(equalTo: button.bottomAnchor),
+            tableView.leftAnchor.constraint(equalTo: view.leftAnchor),
+            tableView.rightAnchor.constraint(equalTo: view.rightAnchor),
+            tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+            
         ])
     }
     
     func render(_ state: ViewState) {
-        buildingLabel.text = state.buildings.first?.name ?? "Empty"
+        buildings = state.buildings
+        tableView.reloadData()
     }
     
     @objc func fetchBuildings() {
         onButtonTap()
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = UITableViewCell()
+        cell.textLabel?.text = buildings[indexPath.row].name
+        
+        return cell
+    }
+    
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return buildings.count
     }
 }
 
